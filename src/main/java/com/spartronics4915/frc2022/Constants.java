@@ -26,7 +26,7 @@ public final class Constants
 
         // sensor models
         public static final double kWheelDiameter = Double.NaN;
-        public static final double kNativeUnitsPerRevolution = Double.NaN;
+        public static final double kNativeUnitsPerRevolution = 42.0;
 
         // constructors
         public static final TriFunction<Integer, SensorModel, Integer, SpartronicsMotor> kMotorConstructor = SpartronicsMax::makeMotor;
