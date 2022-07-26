@@ -1,7 +1,9 @@
 package com.spartronics4915.frc2022.commands;
 
 import static com.spartronics4915.frc2022.Constants.Drive.*;
+
 import com.spartronics4915.frc2022.subsystems.Drive;
+import com.spartronics4915.lib.util.Logger;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -20,6 +22,8 @@ public class DriveCommands
         mJoystick = joystick;
         mInvertJoystickY = true; // convention is to invert joystick y
         mSlowMode = false;
+        
+        mDrive.setDefaultCommand(new TeleOpCommand());
     }
 
     public class TeleOpCommand extends CommandBase
@@ -41,6 +45,7 @@ public class DriveCommands
             // get -1 to 1 values for X and Y of the joystick
             double x = mJoystick.getX();
             double y = mJoystick.getY();
+            Logger.info(x + ", " + y);
 
             if (mSlowMode) {
                 x *= kSlowModeMultiplier;
@@ -59,12 +64,35 @@ public class DriveCommands
         }
     }
 
-    public class ToggleSlowModeCommand extends CommandBase
+    public class SlowMode extends CommandBase
     {
+        public SlowMode() {
+            addRequirements(mDrive);
+        }
+
         @Override
         public void initialize()
         {
-            mSlowMode = !mSlowMode;
+            mDrive.logInfo("SLOW MODE START");
+            mSlowMode = true;
+        }
+
+        @Override
+        public void end(boolean interrupted) {
+            mDrive.logInfo("SLOW MODE END");
+            mSlowMode = false;
+        }
+    }
+
+    public class ForceSlowModeOn extends CommandBase {
+        public ForceSlowModeOn() {
+            addRequirements(mDrive);
+        }
+
+        @Override
+        public void initialize()
+        {
+            mSlowMode = true;
         }
 
         @Override
@@ -76,6 +104,10 @@ public class DriveCommands
 
     public class ToggleInverted extends CommandBase
     {
+        public ToggleInverted() {
+            addRequirements(mDrive);
+        }
+
         @Override
         public void initialize()
         {

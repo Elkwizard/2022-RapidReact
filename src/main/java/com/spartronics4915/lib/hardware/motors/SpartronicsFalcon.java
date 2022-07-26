@@ -6,13 +6,13 @@ import com.ctre.phoenix.motorcontrol.DemandType;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.spartronics4915.lib.hardware.CANCounter;
 import com.spartronics4915.lib.util.Logger;
 
 import edu.wpi.first.wpilibj.RobotBase;
 
-public class SpartronicsSRX implements SpartronicsMotor
+public class SpartronicsFalcon implements SpartronicsMotor
 {
     private static final int kVelocitySlotIdx = 0;
     private static final int kPositionSlotIdx = 1;
@@ -23,8 +23,8 @@ public class SpartronicsSRX implements SpartronicsMotor
     private static final double kMetersPerSecondToMetersPer100ms = 1
         / kMetersPer100msToMetersPerSecond;
 
-    private final TalonSRX mTalonSRX;
-    private final TalonSRX mFollower;
+    private final TalonFX mFalconFX;
+    private final TalonFX mFollower;
     private final SpartronicsEncoder mEncoder;
     private final SensorModel mSensorModel;
     private final boolean mHadStartupError;
@@ -40,33 +40,33 @@ public class SpartronicsSRX implements SpartronicsMotor
 
     private ControlMode mLastControlMode = null;
 
-    public class SpartronicsSRXEncoder implements SpartronicsEncoder
+    public class SpartronicsFalconEncoder implements SpartronicsEncoder
     {
 
         @Override
         public double getVelocity()
         {
-            return mSensorModel.toCustomUnits(mTalonSRX.getSelectedSensorVelocity())
+            return mSensorModel.toCustomUnits(mFalconFX.getSelectedSensorVelocity())
                 * kMetersPer100msToMetersPerSecond;
         }
 
         @Override
         public double getPosition()
         {
-            return mSensorModel.toCustomUnits(mTalonSRX.getSelectedSensorPosition());
+            return mSensorModel.toCustomUnits(mFalconFX.getSelectedSensorPosition());
         }
 
         @Override
         public void setPhase(boolean isReversed)
         {
-            mTalonSRX.setSensorPhase(isReversed);
+            mFalconFX.setSensorPhase(isReversed);
         }
 
         @Override
         public boolean setPosition(double position)
         {
-            mTalonSRX.getSensorCollection()
-                .setQuadraturePosition((int) mSensorModel.toNativeUnits(position), 0);
+            mFalconFX.getSensorCollection()
+                .setIntegratedSensorPosition(mSensorModel.toNativeUnits(position), 0);
             return true;
         }
     }
@@ -78,7 +78,7 @@ public class SpartronicsSRX implements SpartronicsMotor
         {
             return new SpartronicsSimulatedMotor(deviceNumber);
         }
-        return new SpartronicsSRX(new TalonSRX(deviceNumber), sensorModel, feedbackDevice, null);
+        return new SpartronicsFalcon(new TalonFX(deviceNumber), sensorModel, feedbackDevice, null);
     }
 
     public static SpartronicsMotor makeMotor(int deviceNumber, SensorModel sensorModel)
@@ -98,24 +98,24 @@ public class SpartronicsSRX implements SpartronicsMotor
         {
             return new SpartronicsSimulatedMotor(deviceNumber, followerDeviceNumber);
         }
-        var master = new TalonSRX(deviceNumber);
-        var follower = new TalonSRX(followerDeviceNumber);
+        var master = new TalonFX(deviceNumber);
+        var follower = new TalonFX(followerDeviceNumber);
         follower.follow(master);
 
-        return new SpartronicsSRX(master, sensorModel, FeedbackDevice.QuadEncoder, follower);
+        return new SpartronicsFalcon(master, sensorModel, FeedbackDevice.QuadEncoder, follower);
     }
 
-    private SpartronicsSRX(TalonSRX talon, SensorModel sensorModel, FeedbackDevice encoder,
-        TalonSRX follower)
+    private SpartronicsFalcon(TalonFX talon, SensorModel sensorModel, FeedbackDevice encoder,
+        TalonFX follower)
     {
-        mTalonSRX = talon;
+        mFalconFX = talon;
         mFollower = follower;
         mSensorModel = sensorModel;
 
-        ErrorCode err = mTalonSRX.configSelectedFeedbackSensor(encoder, 0, 5);
+        ErrorCode err = mFalconFX.configSelectedFeedbackSensor(encoder, 0, 5);
         if (err != ErrorCode.OK)
         {
-            Logger.error("TalonSRX on with ID " + mTalonSRX.getDeviceID()
+            Logger.error("TalonSRX on with ID " + mFalconFX.getDeviceID()
                 + " returned a non-OK error code on sensor configuration... Is the encoder plugged in?");
             mHadStartupError = true;
         }
@@ -125,11 +125,11 @@ public class SpartronicsSRX implements SpartronicsMotor
         }
         CANCounter.addDevice(mHadStartupError);
 
-        mEncoder = new SpartronicsSRXEncoder();
+        mEncoder = new SpartronicsFalconEncoder();
 
-        mTalonSRX.configFactoryDefault();
-        mTalonSRX.configVoltageCompSaturation(mVoltageCompSaturation);
-        mTalonSRX.enableVoltageCompensation(true);
+        mFalconFX.configFactoryDefault();
+        mFalconFX.configVoltageCompSaturation(mVoltageCompSaturation);
+        mFalconFX.enableVoltageCompensation(true);
     }
 
     @Override
@@ -147,19 +147,19 @@ public class SpartronicsSRX implements SpartronicsMotor
     @Override
     public double getVoltageOutput()
     {
-        return mTalonSRX.getMotorOutputVoltage();
+        return mFalconFX.getMotorOutputVoltage();
     }
 
     @Override
     public boolean getOutputInverted()
     {
-        return mTalonSRX.getInverted();
+        return mFalconFX.getInverted();
     }
 
     @Override
     public void setOutputInverted(boolean inverted)
     {
-        mTalonSRX.setInverted(inverted);
+        mFalconFX.setInverted(inverted);
     }
 
     @Override
@@ -172,7 +172,7 @@ public class SpartronicsSRX implements SpartronicsMotor
     public void setBrakeMode(boolean mode)
     {
         mBrakeMode = mode;
-        mTalonSRX.setNeutralMode(mode ? NeutralMode.Brake : NeutralMode.Coast);
+        mFalconFX.setNeutralMode(mode ? NeutralMode.Brake : NeutralMode.Coast);
     }
 
     @Override
@@ -185,8 +185,8 @@ public class SpartronicsSRX implements SpartronicsMotor
     public void setVoltageCompSaturation(double voltage)
     {
         mVoltageCompSaturation = voltage;
-        mTalonSRX.configVoltageCompSaturation(mVoltageCompSaturation);
-        mTalonSRX.enableVoltageCompensation(true);
+        mFalconFX.configVoltageCompSaturation(mVoltageCompSaturation);
+        mFalconFX.enableVoltageCompensation(true);
     }
 
     @Override
@@ -201,7 +201,7 @@ public class SpartronicsSRX implements SpartronicsMotor
     {
         mMotionProfileCruiseVelocity = mSensorModel
             .toNativeUnits(velocityMetersPerSecond * kMetersPerSecondToMetersPer100ms);
-        mTalonSRX.configMotionCruiseVelocity((int) mMotionProfileCruiseVelocity);
+        mFalconFX.configMotionCruiseVelocity((int) mMotionProfileCruiseVelocity);
     }
 
     @Override
@@ -216,7 +216,7 @@ public class SpartronicsSRX implements SpartronicsMotor
     {
         mMotionProfileAcceleration = mSensorModel
             .toNativeUnits(accelerationMetersPerSecondSq * kMetersPerSecondToMetersPer100ms);
-        mTalonSRX.configMotionAcceleration((int) mMotionProfileAcceleration);
+        mFalconFX.configMotionAcceleration((int) mMotionProfileAcceleration);
     }
 
     @Override
@@ -229,7 +229,7 @@ public class SpartronicsSRX implements SpartronicsMotor
     public void setPercentOutput(double dutyCycle, double arbitraryFeedForwardVolts)
     {
         mLastControlMode = ControlMode.PercentOutput;
-        mTalonSRX.set(ControlMode.PercentOutput, dutyCycle, DemandType.ArbitraryFeedForward,
+        mFalconFX.set(ControlMode.PercentOutput, dutyCycle, DemandType.ArbitraryFeedForward,
             arbitraryFeedForwardVolts / mVoltageCompSaturation);
     }
 
@@ -244,13 +244,13 @@ public class SpartronicsSRX implements SpartronicsMotor
     {
         if (mLastControlMode != ControlMode.Velocity)
         {
-            mTalonSRX.selectProfileSlot(kVelocitySlotIdx, 0);
+            mFalconFX.selectProfileSlot(kVelocitySlotIdx, 0);
             mLastControlMode = ControlMode.Velocity;
         }
 
         double velocityNative = mSensorModel
             .toNativeUnits(velocityMetersPerSecond * kMetersPerSecondToMetersPer100ms);
-        mTalonSRX.set(ControlMode.Velocity, velocityNative, DemandType.ArbitraryFeedForward,
+        mFalconFX.set(ControlMode.Velocity, velocityNative, DemandType.ArbitraryFeedForward,
             arbitraryFeedForwardVolts / mVoltageCompSaturation);
     }
 
@@ -263,10 +263,10 @@ public class SpartronicsSRX implements SpartronicsMotor
     @Override
     public void setVelocityGains(double kP, double kI, double kD, double kF)
     {
-        mTalonSRX.config_kP(kVelocitySlotIdx, kP);
-        mTalonSRX.config_kI(kVelocitySlotIdx, kI);
-        mTalonSRX.config_kD(kVelocitySlotIdx, kD);
-        mTalonSRX.config_kF(kVelocitySlotIdx, kF);
+        mFalconFX.config_kP(kVelocitySlotIdx, kP);
+        mFalconFX.config_kI(kVelocitySlotIdx, kI);
+        mFalconFX.config_kD(kVelocitySlotIdx, kD);
+        mFalconFX.config_kF(kVelocitySlotIdx, kF);
     }
 
     @Override
@@ -274,12 +274,12 @@ public class SpartronicsSRX implements SpartronicsMotor
     {
         if (mLastControlMode != ControlMode.Position)
         {
-            mTalonSRX.selectProfileSlot(kPositionSlotIdx, 0);
+            mFalconFX.selectProfileSlot(kPositionSlotIdx, 0);
             mLastControlMode = ControlMode.Position;
         }
 
         double positionNative = mSensorModel.toNativeUnits(positionMeters);
-        mTalonSRX.set(mUseMotionProfileForPosition ? ControlMode.MotionMagic : ControlMode.Position,
+        mFalconFX.set(mUseMotionProfileForPosition ? ControlMode.MotionMagic : ControlMode.Position,
             positionNative);
     }
 
@@ -292,10 +292,10 @@ public class SpartronicsSRX implements SpartronicsMotor
     @Override
     public void setPositionGains(double kP, double kI, double kD, double kF)
     {
-        mTalonSRX.config_kP(kPositionSlotIdx, kP);
-        mTalonSRX.config_kI(kPositionSlotIdx, kI);
-        mTalonSRX.config_kD(kPositionSlotIdx, kD);
-        mTalonSRX.config_kF(kPositionSlotIdx, kF);
+        mFalconFX.config_kP(kPositionSlotIdx, kP);
+        mFalconFX.config_kI(kPositionSlotIdx, kI);
+        mFalconFX.config_kD(kPositionSlotIdx, kD);
+        mFalconFX.config_kF(kPositionSlotIdx, kF);
     }
 
     @Override
@@ -313,48 +313,43 @@ public class SpartronicsSRX implements SpartronicsMotor
     @Override
     public void setNeutral()
     {
-        mTalonSRX.set(ControlMode.Disabled, 0.0, DemandType.Neutral, 0.0);
+        mFalconFX.set(ControlMode.Disabled, 0.0, DemandType.Neutral, 0.0);
     }
 
     @Override
     public double getOutputCurrent()
     {
-        return mTalonSRX.getStatorCurrent();
-    }
-
-    @Override
-    public void setStatorCurrentLimit(int limitAmps) {
-        mTalonSRX.configPeakCurrentLimit(limitAmps);
+        return mFalconFX.getStatorCurrent();
     }
 
     @Override
     public SpartronicsMotor getFollower()
     {
-        return new SpartronicsSRX(mFollower, mSensorModel, FeedbackDevice.None, null);
+        return new SpartronicsFalcon(mFollower, mSensorModel, FeedbackDevice.None, null);
     }
 
     @Override
     public int getDeviceNumber()
     {
-        return mTalonSRX.getDeviceID();
+        return mFalconFX.getDeviceID();
     }
 
     @Override
     public void setSoftLimits(double forwardLimitCustomUnits, double reverseLimitCustomUnits)
     {
-        mTalonSRX.configForwardSoftLimitEnable(true);
-        mTalonSRX.configReverseSoftLimitEnable(true);
+        mFalconFX.configForwardSoftLimitEnable(true);
+        mFalconFX.configReverseSoftLimitEnable(true);
 
-        mTalonSRX.configForwardSoftLimitThreshold(
+        mFalconFX.configForwardSoftLimitThreshold(
             (int) Math.round(mSensorModel.toNativeUnits(forwardLimitCustomUnits)));
-        mTalonSRX.configReverseSoftLimitThreshold(
+        mFalconFX.configReverseSoftLimitThreshold(
             (int) Math.round(mSensorModel.toNativeUnits(reverseLimitCustomUnits)));
     }
 
     @Override
     public void setSupplyCurrentLimit(int limitAmps, double maxTimeAtLimit)
     {
-        mTalonSRX.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, limitAmps, limitAmps, maxTimeAtLimit));
+        mFalconFX.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, limitAmps, limitAmps, maxTimeAtLimit));
     }
 
 }
