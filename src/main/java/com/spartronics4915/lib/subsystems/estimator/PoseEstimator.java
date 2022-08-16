@@ -24,6 +24,10 @@ public class PoseEstimator extends SubsystemBase {
 		);
 	}
 
+	public PoseEstimator(AbstractDrive _drivetrain) {
+		this(_drivetrain, new Pose2d());
+	}
+
 	@Override
 	public void periodic() {
 		getPose();

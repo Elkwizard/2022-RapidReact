@@ -37,10 +37,10 @@ public class Drive extends AbstractDrive
         mLeftMotor.setVelocityGains(kP, kD);
         mRightMotor.setVelocityGains(kP, kD);
 
-        mLeftMotor.setBrakeMode(false);
-        mRightMotor.setBrakeMode(false);
-        mLeftMotor.getFollower().setBrakeMode(false);
-        mRightMotor.getFollower().setBrakeMode(false);
+        mLeftMotor.setBrakeMode(true);
+        mRightMotor.setBrakeMode(true);
+        mLeftMotor.getFollower().setBrakeMode(true);
+        mRightMotor.getFollower().setBrakeMode(true);
 
         // stator current limits
         // mLeftMotor.setStatorCurrentLimit(kMaxCurrent);

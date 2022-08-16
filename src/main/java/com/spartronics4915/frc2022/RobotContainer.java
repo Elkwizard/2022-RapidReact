@@ -11,10 +11,18 @@ import com.spartronics4915.frc2022.subsystems.Drive;
 import com.spartronics4915.frc2022.subsystems.Intake;
 import com.spartronics4915.frc2022.subsystems.Conveyor;
 import com.spartronics4915.frc2022.subsystems.Launcher;
+import com.spartronics4915.lib.commands.TrajectoryFollowerCommands;
+import com.spartronics4915.lib.subsystems.estimator.PoseEstimator;
 import com.spartronics4915.frc2022.subsystems.Climber;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.spartronics4915.frc2022.Constants.Autonomous;
 import com.spartronics4915.frc2022.Constants.OIConstants;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -47,6 +55,10 @@ public class RobotContainer
     public final Climber mClimber;
     public final ClimberCommands mClimberCommands;
 
+	public final PoseEstimator mPoseEstimator;
+
+	public final TrajectoryFollowerCommands mTrajectoryFollowerCommands;
+
     public final AutonomousCommands mAutonomousCommands;
   
     public static final Joystick mArcadeController = new Joystick(Constants.OIConstants.kArcadeStickPort);
@@ -63,6 +75,7 @@ public class RobotContainer
         mConveyor = new Conveyor();
         mLauncher = new Launcher();
         mClimber = new Climber();
+		mPoseEstimator = new PoseEstimator(mDrive);
         
         mDriveCommands = new DriveCommands(mDrive, mDriverController);
         mIntakeCommands = new IntakeCommands(mIntake, mConveyor);
@@ -70,6 +83,7 @@ public class RobotContainer
         mLauncherCommands = new LauncherCommands(mLauncher, mConveyor, mArcadeController);
         mClimberCommands = new ClimberCommands(mClimber, mArcadeController);
         mAutonomousCommands = new AutonomousCommands(mDrive);
+		mTrajectoryFollowerCommands = new TrajectoryFollowerCommands(mDrive, mPoseEstimator, Autonomous.kTrackWidthMeters);
 
         configureButtonBindings();
     }
@@ -113,10 +127,16 @@ public class RobotContainer
      */
     public Command getAutonomousCommand()
     {
-        return new SequentialCommandGroup(
-            mConveyorCommands.new Shoot1(),
-            mAutonomousCommands.new AutonomousDrive()
-            );
+		return mTrajectoryFollowerCommands.new FollowTrajectory(
+			new ArrayList<>(List.of(
+				new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+				new Pose2d(4, 0, Rotation2d.fromDegrees(0))
+			)), 0.0, 0.0, 0.5, 0.1
+		);
+        // return new SequentialCommandGroup(
+        //     mConveyorCommands.new Shoot1(),
+        //     mAutonomousCommands.new AutonomousDrive()
+        // );
     }
 
     public Command getTeleopCommand()

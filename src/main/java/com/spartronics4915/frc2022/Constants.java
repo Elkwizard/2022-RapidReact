@@ -40,7 +40,7 @@ public final class Constants
         public static final boolean kRightFollowerOutputInverted = true;
 
         // PID
-        public static final double kP = 1;
+        public static final double kP = 0.17166;
         public static final double kD = 0;
 
         // current limits
@@ -68,7 +68,6 @@ public final class Constants
     }
 
     public static class Conveyor {
-    
         public static final int kBottomMotorId = 8;
         public static final int kTopMotorId = 9;
 
@@ -193,6 +192,7 @@ public final class Constants
          * Speed the robot moves straight backwards during autonomous
          */
         public static final double kDriveSpeedPercent = .3;
+		public static final double kTrackWidthMeters = Double.NaN;
 
         //Not used for first competition autonomous.
         /*public static final class Trajectory {
