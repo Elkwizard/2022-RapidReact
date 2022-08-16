@@ -25,7 +25,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
 
@@ -77,13 +79,19 @@ public class RobotContainer
         mClimber = new Climber();
 		mPoseEstimator = new PoseEstimator(mDrive);
         
-        mDriveCommands = new DriveCommands(mDrive, mDriverController);
+        mDriveCommands = new DriveCommands(mDrive, mDriverController, mArcadeController);
         mIntakeCommands = new IntakeCommands(mIntake, mConveyor);
-        mConveyorCommands = new ConveyorCommands(mConveyor, mIntake);
+        mConveyorCommands = new ConveyorCommands(mConveyor, mIntake, mLauncher);
         mLauncherCommands = new LauncherCommands(mLauncher, mConveyor, mArcadeController);
-        mClimberCommands = new ClimberCommands(mClimber, mArcadeController);
-        mAutonomousCommands = new AutonomousCommands(mDrive);
-		mTrajectoryFollowerCommands = new TrajectoryFollowerCommands(mDrive, mPoseEstimator, Autonomous.kTrackWidthMeters);
+        mClimberCommands = new ClimberCommands(mClimber);
+        mAutonomousCommands = new AutonomousCommands(mDrive, mIntakeCommands, mConveyorCommands, mLauncherCommands);
+		mTrajectoryFollowerCommands = new TrajectoryFollowerCommands(mDrive, mPoseEstimator, Constants.Autonomous.kTrackWidthMeters);
+
+        {
+            String[] autoModes = mAutonomousCommands.getAllAutoModes();
+            String options = String.join(",", autoModes);
+            SmartDashboard.putString("AutoStrategyOptions", options);
+        };
 
         configureButtonBindings();
     }
@@ -99,6 +107,8 @@ public class RobotContainer
             .whileHeld(mConveyorCommands.new ReverseBoth());
         new JoystickButton(mArcadeController, OIConstants.kConveyorReverseBottomButton)
             .whileHeld(mConveyorCommands.new ReverseBottom());
+        new JoystickButton(mArcadeController, OIConstants.kConveyorRunBothButton)
+            .whileHeld(mConveyorCommands.new RunBoth());
             
         new JoystickButton(mArcadeController, OIConstants.kLauncherShootButton)
             .whenPressed(new SequentialCommandGroup(
@@ -113,11 +123,14 @@ public class RobotContainer
         new JoystickButton(mArcadeController, OIConstants.kClimberExtendButton)
             .whenPressed(mClimberCommands.new StartExtend())
             .whenReleased(mClimberCommands.new StopExtend());
-        new JoystickButton(mArcadeController, OIConstants.kClimberRetractButton)
-            .whileHeld(mClimberCommands.new RetractTheMotor());
 
-        new JoystickButton(mDriverController, OIConstants.kSlowModeButton)
-            .whileHeld(mDriveCommands.new SlowMode());
+        new JoystickButton(mArcadeController, OIConstants.kClimberRetractButton)
+            .whenPressed(mClimberCommands.new StartRetract())
+            .whenReleased(mClimberCommands.new StopRetract());
+
+        /*new JoystickButton(mArcadeController, OIConstants.kClimberRetractButton)
+            .whileHeld(mClimberCommands.new RetractTheMotor());*/
+
     }
 
     /**
@@ -141,6 +154,9 @@ public class RobotContainer
 
     public Command getTeleopCommand()
     {
-        return mLauncherCommands.new ToggleLauncher();
+        return new ParallelCommandGroup(
+            mLauncherCommands.new TurnOnLauncher(),
+            mClimberCommands.new InitClimber()
+        );
     }
 }

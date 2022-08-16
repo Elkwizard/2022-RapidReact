@@ -30,6 +30,9 @@ public final class Constants
         public static final double kWheelDiameter = 0.1524; // in meters
         public static final double kNativeUnitsPerRevolution = 1;
 
+        //Test this -- to correct for angular drift autonomous
+        public static final double kLeftFactor = .965;
+
         // constructors
         public static final TriFunction<Integer, SensorModel, Integer, SpartronicsMotor> kMotorConstructor = SpartronicsMax::makeMotor;
 
@@ -63,6 +66,7 @@ public final class Constants
         public static final double kEjectSpeed = -0.6;
         
         public static final double kRetractIntakeDelay = 0.3;
+        public static final double kIntakeStopMotorDelay = 1;
 
         public static final int kMaxCurrent = 30;
     }
@@ -71,17 +75,17 @@ public final class Constants
         public static final int kBottomMotorId = 8;
         public static final int kTopMotorId = 9;
 
+        public static final boolean kTopConveyorInverted = false;
+        public static final boolean kBottomConveyorInverted = false; 
+
         public static final int kTopBeamBreakerId = 0;
         public static final int kBottomBeamBreakerId = 1;
 
         public static final double kMotorSpeed = 0.45;
         public static final double kSlowFactor = 0.3333;
-        
-        public static final double kTopConveyorTime = 2.0;
-        public static final double kBottomConveyorTime = 1.0;
 
-        public static final int kStopFrequency = (int)(1 / 0.02);
-        public static final int kStopLength = (int)(0.1 / 0.02);
+        public static final double kTopConveyorTime = 0.3;
+        public static final double kBottomConveyorTime = 0.3;
         
         public static final double kStopConveyorsDelay = 1.0;
 
@@ -99,7 +103,7 @@ public final class Constants
 
             public static final boolean kInverted = false;
             
-            public static final double kRPS = 28.07;
+            public static final double kRPS = 28.07 + Units.tadsToRPS(5);
             public static final double kFarRPS = 10;
 
             public static final int kMaxCurrent = 40;
@@ -117,7 +121,7 @@ public final class Constants
             
             public static final double kSpeedFactor = .5;
 
-            public static final int kMaxCurrent = 40;
+            public static final int kMaxCurrent = 30;
         }
         // public static class Spin {
         //     public static final double kP = 0.03;
@@ -128,21 +132,30 @@ public final class Constants
     }
     public static final class Climber
     {
-        public static final int kClimberMotorId = 10;
-        public static final double kClimberMotorSpeed = 1.0;
-        public static final boolean kMotorIsInverted = false;
+        public static final int kClimberMotorId = 13;
+        //public static final int kClimberFollowerId = -1; tbd
+        public static final double kClimberMotorSpeed = 1; //0.2 for testing
+        public static final boolean kMotor1IsInverted = false;
+        public static final boolean kMotor2IsInverted = false; // false -> inverted vs motor1
 
         public static final int kClimberSolenoidId = 1;
         public static final boolean kSolenoidIsInverted = false;
 
+        //TODO: janky number might need to be set to a better value
         /**
-         * Distance we can move the climber from being down before breaking it. Calculated by Jack.
+         * Distance we can rotate the motor from being down before breaking it. Found through testing and logging.
          */
-        public static final double kMaxRotations = 1000;//16.1;//11.883569084;
+        public static final double kMaxRotations = 200000;
+
         /**
          * Climber will be put down before every match so that's where 0 is.
          */
-        public static final double kMinRotations = 0;
+        public static final double kMinRotations = -200000;
+
+        /**
+         * Takes 21 rotations of climber to rotate winch.
+         */
+        public static final double kClimberGearRatio = 21.0;
         /**
          * For Climber encoder -- divide getIntegratedSensorPosition() by this.
          */
@@ -151,9 +164,10 @@ public final class Constants
          * The delay in seconds between disengaging the ratchet and starting the motor, or stopping the motor and 
          * engaging the ratchet.
          */
-        public static final double kDelay = 0.1; // adjust 1st number for ms
+        public static final double kDelay = 0.3; // adjust 1st number for ms
 
-        public static final int kMaxCurrent = 40;
+        //set very high to see if it remembered it was at 40??
+        public static final int kMaxCurrent = 100;
     }
 
     public static final class OIConstants {
@@ -167,12 +181,15 @@ public final class Constants
         public static final int kJoystickPort = 0;
         
         public static final int kSlowModeButton = 1;
+        
+        public static final int kFlipJoystickButton = 6;
 
         public static final int kIntakeToggleButton = 2;
 
         public static final int kConveyorReverseBothButton = 3;
         public static final int kConveyorReverseBottomButton = 4;
         public static final int kConveyorReverseTopButton = 5;
+        public static final int kConveyorRunBothButton = 1;
 
         public static final int kLauncherShootButton = 6;
         public static final int kLauncherToggleButton = 8;
@@ -193,6 +210,18 @@ public final class Constants
          */
         public static final double kDriveSpeedPercent = .3;
 		public static final double kTrackWidthMeters = Double.NaN;
+        public static final double kTurnSpeedPercent = .3;
+
+        public static final double kDriveGearRatio = 10.57; 
+
+        /**
+         * Delay in seconds between starting Auto and shooting to let the wheel reach its speed
+         */
+        public static final double kShootDelayShort = 0.3;
+        public static final double kShootDelayLong = 10;
+        public static final double kSpinUpDelay = 1;
+
+        public static final String kDefaultMode = "Shoot; Short Wait; Drive";
 
         //Not used for first competition autonomous.
         /*public static final class Trajectory {

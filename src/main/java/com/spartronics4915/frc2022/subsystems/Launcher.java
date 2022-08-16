@@ -1,7 +1,5 @@
 package com.spartronics4915.frc2022.subsystems;
 
-import com.revrobotics.CANSparkMax;
-import com.spartronics4915.frc2022.Constants;
 import com.spartronics4915.lib.subsystems.SpartronicsSubsystem;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -9,8 +7,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.spartronics4915.lib.hardware.motors.SpartronicsEncoder;
 import com.spartronics4915.lib.hardware.motors.SpartronicsMax;
 import com.spartronics4915.lib.hardware.motors.SpartronicsMotor;
-import com.spartronics4915.lib.hardware.motors.SpartronicsFalcon;
-import com.spartronics4915.lib.hardware.motors.SpartronicsSimulatedMotor;
 //import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
 
 import static com.spartronics4915.frc2022.Constants.Launcher.*;
@@ -29,6 +25,8 @@ public class Launcher extends SpartronicsSubsystem
     // public double FlywheelRPS = 0;
     // public boolean editRPS = false;
     // public boolean enableFlywheel = false;
+
+    private boolean mPaused;
 
     /** Creates a new Launcher. */
     public Launcher()
@@ -55,6 +53,24 @@ public class Launcher extends SpartronicsSubsystem
 
         mFlywheelMotor.setStatorCurrentLimit(Flywheel.kMaxCurrent);
         mSpinMotor.setStatorCurrentLimit(SpinMotor.kMaxCurrent);
+        
+        mFlywheelMotor.setBrakeMode(false);
+        mSpinMotor.setBrakeMode(false);
+
+        mPaused = false;
+    }
+
+    public boolean togglePaused() {
+        setPaused(!mPaused);
+        return mPaused;
+    }
+
+    /**
+     * @param paused -- whether to pause
+     */
+    public void setPaused(boolean paused) {
+        mPaused = paused;
+        setToggled(!mPaused);
     }
 
     public boolean toggleLauncher() {
@@ -67,7 +83,7 @@ public class Launcher extends SpartronicsSubsystem
     }
     public double getTargetRPS() {
         return Flywheel.kRPS;
-        // return SmartDashboard.getNumber("Launcher/flywheelRPSSlider", 0);
+        //return SmartDashboard.getNumber("Launcher/flywheelRPSSlider", 0);
     }
     public void setMotorSpeed(double launcherVelocity) {
         mFlywheelMotor.setVelocity(launcherVelocity);
@@ -86,6 +102,10 @@ public class Launcher extends SpartronicsSubsystem
         return mLauncherToggle;
     }
 
+    public double getSlider() {
+        return SmartDashboard.getNumber("Launcher/flywheelRPSSlider", 0);
+    }
+
     /** This method will be called once per scheduler run. */
     @Override
     public void periodic() {
@@ -94,6 +114,7 @@ public class Launcher extends SpartronicsSubsystem
         // logInfo(Double.toString(SmartDashboard.getNumber("Launcher/flywheelRPSSlider", 3)));
         //mFlywheelMotor.setVelocity(SmartDashboard.getNumber("/SmartDashboard/Launcher/flywheelRPSSlider", 0));
         SmartDashboard.putNumber("Launcher/flywheelRPS", mFlywheelEncoder.getVelocity());
+        SmartDashboard.putBoolean("Launcher/MotorActive", mLauncherToggle);
     }
 
     /** This method will be called once per scheduler run during simulation. */
